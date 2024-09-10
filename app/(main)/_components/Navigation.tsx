@@ -1,19 +1,66 @@
-import { ChevronsLeft, MenuIcon } from "lucide-react";
-import { usePathname } from "next/navigation";
-import { ElementRef, useRef, useState } from "react";
+import { ElementRef, useEffect, useRef, useState } from "react";
+import { useParams, usePathname } from "next/navigation";
 import { useMediaQuery } from "usehooks-ts";
+import { useMutation } from "convex/react";
+import { api } from "@/convex/_generated/api";
 
+import {
+  ChevronsLeft,
+  MenuIcon,
+  Plus,
+  PlusCircle,
+  Search,
+  Settings,
+  Trash,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
+import { toast } from "sonner";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+
+import { UserItem } from "./UserItem";
+import { Item } from "./Item";
+import { DocumentList } from "./DocumentList";
+import { TrashBox } from "./TrashBox";
+import { Navbar } from "./Navbar";
+
+import { useSearch } from "@/hooks/use-search";
+import { useSettings } from "@/hooks/use-settings";
 
 export const Navigation = () => {
+  const search = useSearch();
+  const settings = useSettings();
+  const params = useParams();
+
   const pathname = usePathname();
   const isMobile = useMediaQuery("(max-width: 768px)");
+
+  const create = useMutation(api.documents.create);
 
   const isResizingRef = useRef(false);
   const sidebarRef = useRef<ElementRef<"aside">>(null);
   const navbarRef = useRef<ElementRef<"div">>(null);
   const [isResetting, setIsResetting] = useState(false);
   const [isCollapsed, setIsCollapsed] = useState(isMobile);
+
+  useEffect(() => {
+    if (isMobile) {
+      collapse();
+    } else {
+      resetWidth();
+    }
+
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isMobile]);
+
+  useEffect(() => {
+    if (isMobile) {
+      collapse();
+    }
+  }, [isMobile, pathname]);
 
   const handleMouseDown = (
     event: React.MouseEvent<HTMLDivElement, MouseEvent>
@@ -79,6 +126,16 @@ export const Navigation = () => {
     }
   };
 
+  const handleCreate = () => {
+    const promise = create({ title: "Untitled" });
+
+    toast.promise(promise, {
+      loading: "Creating a new note...",
+      success: "New note created!",
+      error: "Failed to create a new note",
+    });
+  };
+
   return (
     <>
       <aside
@@ -100,13 +157,37 @@ export const Navigation = () => {
           <ChevronsLeft className="h-6 w-6" />
         </div>
         <div>
-          <p>Action item</p>
+          <UserItem />
+          {/* search */}
+          <Item onClick={search.onOpen} label="Search" icon={Search} isSearch />
+          {/* settings */}
+          <Item onClick={settings.onOpen} label="Settings" icon={Settings} />
+          {/* new page */}
+          <Item onClick={handleCreate} label="New page" icon={PlusCircle} />
         </div>
 
         <div className="mt-4">
-          <p>Documents</p>
+          {/* list of documents */}
+          <DocumentList />
+
+          {/* add a page */}
+          <Item onClick={handleCreate} label="Add a page" icon={Plus} />
+
+          {/* trash */}
+          <Popover>
+            <PopoverTrigger className="w-full mt-4">
+              <Item label="Trash" icon={Trash} />
+            </PopoverTrigger>
+            <PopoverContent
+              className="p-0 w-72"
+              side={isMobile ? "bottom" : "right"}
+            >
+              <TrashBox />
+            </PopoverContent>
+          </Popover>
         </div>
 
+        {/* resize bar */}
         <div
           onMouseDown={handleMouseDown}
           onClick={resetWidth}
@@ -114,6 +195,7 @@ export const Navigation = () => {
         />
       </aside>
 
+      {/* inside navbar */}
       <div
         ref={navbarRef}
         className={cn(
@@ -122,15 +204,19 @@ export const Navigation = () => {
           isMobile && "left-0 w-full"
         )}
       >
-        <nav className="bg-transparent px-3 py-2 w-full">
-          {isCollapsed && (
-            <MenuIcon
-              onClick={resetWidth}
-              role="button"
-              className="h-6 w-6 text-muted-foreground"
-            />
-          )}
-        </nav>
+        {!!params.documentId ? (
+          <Navbar isCollapsed={isCollapsed} onResetWidth={resetWidth} />
+        ) : (
+          <nav className="bg-transparent px-3 py-2 w-full">
+            {isCollapsed && (
+              <MenuIcon
+                onClick={resetWidth}
+                role="button"
+                className="h-6 w-6 text-muted-foreground"
+              />
+            )}
+          </nav>
+        )}
       </div>
     </>
   );
