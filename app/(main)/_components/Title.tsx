@@ -44,30 +44,28 @@ export const Title = ({ initialData }: TitleProps) => {
   };
 
   return (
-    <div className="flex items-center gap-x-2">
-      <div className="text-lg font-semibold">
-        {!!initialData.icon && <p>{initialData.icon}</p>}
-        {isEditing ? (
-          <Input
-            ref={inputRef}
-            onClick={enableInput}
-            onBlur={disableInput}
-            onChange={onChange}
-            onKeyDown={onKeyDown}
-            value={title}
-            className="h-7 px-2 focus-visible:ring-transparent bg-secondary"
-          />
-        ) : (
-          <Button
-            onClick={enableInput}
-            variant="ghost"
-            size="sm"
-            className="font-normal h-auto p-1"
-          >
-            <span className="truncate">{initialData.title}</span>
-          </Button>
-        )}
-      </div>
+    <div className="flex items-center gap-x-1">
+      {!!initialData.icon && <p>{initialData.icon}</p>}
+      {isEditing ? (
+        <Input
+          ref={inputRef}
+          onClick={enableInput}
+          onBlur={disableInput}
+          onChange={onChange}
+          onKeyDown={onKeyDown}
+          value={title}
+          className="h-7 px-2 focus-visible:ring-transparent"
+        />
+      ) : (
+        <Button
+          onClick={enableInput}
+          variant="ghost"
+          size="sm"
+          className="font-normal h-auto p-1"
+        >
+          <span className="truncate">{initialData.title}</span>
+        </Button>
+      )}
     </div>
   );
 };
